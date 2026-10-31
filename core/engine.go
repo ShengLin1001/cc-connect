@@ -12463,16 +12463,14 @@ func (e *Engine) sendAskQuestionPrompt(p Platform, replyCtx any, questions []Use
 		return
 	}
 
-	// Try inline buttons (Telegram)
-	if bs, ok := p.(InlineButtonSender); ok {
+	// Try inline buttons (Telegram, Discord). Multi-select falls through to the
+	// numbered text list, as on the Feishu card: the first click would resolve it.
+	if bs, ok := p.(InlineButtonSender); ok && !q.MultiSelect {
 		var textBuf strings.Builder
 		textBuf.WriteString("❓ *")
 		textBuf.WriteString(q.Question)
 		textBuf.WriteString("*")
 		textBuf.WriteString(titleSuffix)
-		if q.MultiSelect {
-			textBuf.WriteString(e.i18n.T(MsgAskQuestionMulti))
-		}
 		hasDesc := false
 		for _, opt := range q.Options {
 			if opt.Description != "" {
@@ -12522,7 +12520,11 @@ func (e *Engine) sendAskQuestionPrompt(p Platform, replyCtx any, questions []Use
 		}
 		sb.WriteString("\n")
 	}
-	sb.WriteString(fmt.Sprintf("\n%s", e.i18n.T(MsgAskQuestionNote)))
+	note := MsgAskQuestionNote
+	if q.MultiSelect {
+		note = MsgAskQuestionNoteMulti
+	}
+	sb.WriteString(fmt.Sprintf("\n%s", e.i18n.T(note)))
 	e.send(p, replyCtx, sb.String())
 }
 

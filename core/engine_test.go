@@ -6793,6 +6793,21 @@ func TestSendAskQuestionPrompt_InlineButtonPlatform(t *testing.T) {
 	}
 }
 
+func TestSendAskQuestionPrompt_InlineButtonPlatform_MultiSelectUsesText(t *testing.T) {
+	e := newTestEngine()
+	p := &stubInlineButtonPlatform{stubPlatformEngine: stubPlatformEngine{n: "discord"}}
+	qs := testQuestions()
+	qs[0].MultiSelect = true
+	e.sendAskQuestionPrompt(p, "ctx", qs, 0)
+
+	if len(p.buttonRows) != 0 {
+		t.Fatalf("multi-select sent %d button rows; the first click would resolve it", len(p.buttonRows))
+	}
+	if len(p.sent) != 1 || !strings.Contains(p.sent[0], "3. **MySQL**") || !strings.Contains(p.sent[0], "1,3") {
+		t.Fatalf("sent = %q, want numbered options and the comma-separated hint", p.sent)
+	}
+}
+
 func TestSendAskQuestionPrompt_PlainPlatform(t *testing.T) {
 	e := newTestEngine()
 	p := &stubPlatformEngine{n: "plain"}
